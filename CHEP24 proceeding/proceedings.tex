@@ -35,8 +35,8 @@
 %%%\subtitle{Do you have a subtitle?\\ If so, write it here}
 
 
-\author{\firstname{Saransh} \lastname{Chopra}\inst{1} \and
-        \firstname{Jim} \lastname{Pivarski}\inst{1}\fnsep\thanks{\email{pivarski@princeton.edu}}
+\author{\firstname{Saransh} \lastname{Chopra}\inst{1}\fnsep\inst{2} \and
+        \firstname{Jim} \lastname{Pivarski}\inst{2}\fnsep\thanks{\email{pivarski@princeton.edu}}
 }
 
 \institute{University College London 
@@ -44,7 +44,7 @@
            Princeton University 
           }
 
-\abstract{Vector is a Python library for 2D, 3D, and Lorentz vectors, especially arrays of vectors, to solve common physics problems in a NumPy-like \cite{harris:2020} way. Vector can currently perform numerical computations, and through this paper, we introduce a new symbolic backend that extends vector's utility to theoretical physicists. The numerical backends of vector enable users to create pure Python Object, NumPy arrays, and Awkward arrays \cite{Pivarski:2018} of vectors. The Object and Awkward backends are also implemented in Numba \cite{lam:2015} to leverage JIT-compiled vector calculations, and support for JAX \cite{Bradbury:2018} and Dask \cite{rocklin:2015} is available within the Awkward backend. The new symbolic backend, built on top of SymPy \cite{Meurer:2017} expressions, showcases vector's ability to support far-flung cases and allows SymPy methods and functions to work on vector classes. Moreover, apart from a few software, high energy physics has maintained a strict separation between tools used by theorists and experimentalists, and vector's SymPy backend aims to bridge this gap, providing a unified computational framework for both communities.
+\abstract{Vector is a Python library for 2D, 3D, and Lorentz vectors, especially arrays of vectors, to solve common physics problems in a NumPy-like way. Vector can currently perform numerical computations, and through this paper, we introduce a new symbolic backend that extends vector's utility to theoretical physicists. The numerical backends of vector enable users to create pure Python Object, NumPy arrays, and Awkward arrays of vectors. The Object and Awkward backends are also implemented in Numba to leverage JIT-compiled vector calculations. The new symbolic backend, built on top of SymPy expressions, showcases vector's ability to support far-flung cases and allows SymPy methods and functions to work on vector classes. Moreover, apart from a few software, high energy physics has maintained a strict separation between tools used by theorists and experimentalists, and vector's SymPy backend aims to bridge this gap, providing a unified computational framework for both communities.
 }
 %
 \maketitle
@@ -54,15 +54,17 @@
 
 The Scikit-HEP \cite{scikit-hep} ecosystem was primarily designed to be used by experimental physicists to manipulate and perform physics analysis on numerical data. Theoretical physicists have largely been aloof from Scikit-HEP and other experimental physics frameworks, as there exists a divide between the software used by them and experimental physicists. Moreover, only MC generators like Pythia \cite{pythia} are routinely used by both groups, and there have been little to no efforts to unify the software used by theorists and experimentalists.
 
-Vector was designed from the ground up to have multiple computational backends. The core compute functions of the library are written to be generic and library-agnostic, such that they operate only on the data containers and not the data itself. This design pattern has already led to the development of vector's three prominent backends -
+Vector was designed from the ground up to have multiple computational backends. The core compute functions of the library are written to be generic and library-agnostic, such that they operate only on the data containers and not the data itself. This design pattern has already led to the development of vector's three backends -
 
 \begin{itemize}
     \item the Object backed for vectors that pure Python objects,
-    \item the NumPy backend for NumPy arrays of vectors, and
-    \item the Awkward backend for Awkward arrays of vectors.
-\end{itemize} 
+    \item the NumPy \cite{harris:2020} backend for NumPy arrays of vectors,
+    \item the Awkward \cite{Pivarski:2018} backend for Awkward arrays of vectors,
+\end{itemize}
 
-All three backends share the same duck-typed compute functions, allowing vector to increase the number of backends without adding explicit compute functions for each of them. Therefore, this paper extends vector to operate on symbolic expressions to showcase the diversity of backends it can scale to and to enable both experimental and theoretical physicists to utilize the library in their work. Since the SymPy vector classes and their momentum equivalents operate on SymPy expressions, all of the standard SymPy methods and functions work on the vectors, vector coordinates, and the results of operations carried out on vectors. Moreover, vector’s SymPy backend aims to create a stronger connection between software used by experimentalists and software used by theorists.
+and the Numba \cite{lam:2015} extensions for Object and Awkward backend.
+
+All three backends share the same duck-typed compute functions, allowing vector to increase the number of backends without adding explicit compute functions for each of them. Therefore, this paper extends vector to operate on symbolic, or SymPy \cite{Meurer:2017}, expressions to showcase the diversity of backends it can scale to and to enable both experimental and theoretical physicists to utilize the library in their work. Since the SymPy vector classes and their momentum equivalents operate on SymPy expressions, all of the standard SymPy methods and functions work on the vectors, vector coordinates, and the results of operations carried out on vectors. Moreover, vector’s SymPy backend aims to create a stronger connection between software used by experimentalists and software used by theorists.
 
 \section{Implementation}
 \label{sec-implementation}
@@ -167,20 +169,20 @@ print(sympy.printing.c.ccode(boosted.t.simplify()))
 \section{Challenges}
 \label{sec-challenges}
 
-The symbolic backend has two minor but intentional caveats. SymPy internally uses mpmath \cite{mpmath} to perform complex floating-point arithmetic, which has led to minor disagreements between the results obtained through the numerical (Python, NumPy, and Awkward) and the symbolic backend. This disagreement can be minimized by specifying more decimal points in the precision. Further, operations on SymPy vectors are only 100\% compatible with numeric vectors if the vectors are positive time-like, that is, if -
+The symbolic backend has two minor but intentional caveats. SymPy internally uses mpmath \cite{mpmath} to perform complex floating-point arithmetic, leading to minor disagreements between the results obtained through the numerical (Python, NumPy, and Awkward) and the symbolic backends. This disagreement can be minimized by specifying more decimal points in the precision. Further, operations on SymPy vectors are only 100\% compatible with numeric vectors if the vectors are positive time-like, that is, if the following inequality
 
-\begin{equation}
+\begin{equation} \label{ineq-positive-time}
 t^{2} > x^{2} + y^{2} + z^{2}
 \end{equation}
 
-The space-like and negative time-like cases have different sign conventions, which would have led to \codeword{if-else} statements in the code, making it impossible for SymPy to simplify symbolic expressions. Hence, to make SymPy's simplification work, space-like and negative time-like sign conventions are ignored in the shim layer. Given that most high energy physics analyses deal with positive time-like vectors, this caveat does not hinder the ability to use the vector's SymPy backend in theoretical calculations.
+where $x$ and $y$ are Cartesian azimuthal coordinates, $z$ is Cartesian longitudinal coordinate, and $t$ is Cartesian time, holds true. The space-like and negative time-like cases have different sign conventions, which would have led to \codeword{if-else} statements in the code, making it impossible for SymPy to simplify symbolic expressions. Hence, to make SymPy's simplifications work, space-like and negative time-like sign conventions are ignored in the shim layer. Given that most high energy physics analyses deal with positive time-like vectors, this caveat does not hinder the ability to use the vector's SymPy backend in theoretical calculations.
 
 \section{Future work}
 \label{sec-future-work}
 
 The SymPy backend offers users several new features, some of which are relatively under-explored. Symbolic differentiation and code generation for other languages are two such important but unexplored features.
 
-On one hand, there has been a recent push to make high energy physics analysis pipelines differentiable for parameter tuning, such as the ongoing work on integrating Automatic Differentiation in the Analysis Grand Challenge. Vector already extends the JAX backend of Awkward Array, and with the development of SymPy backend, vector can be expected to perform both automatic and symbolic differentiation. On the other hand, code generation for another language through the SymPy backend can potentially help physicists flexibly switch languages and frameworks for their analyses. Both of these functionalities can be assessed and experimented with in the future to fill gaps in the software used for high energy physics.
+On one hand, there has been a recent push to make high energy physics analysis pipelines differentiable for parameter tuning, such as the ongoing work on integrating Automatic Differentiation in the Analysis Grand Challenge \cite{Held:2022sfw}. Vector already extends the JAX \cite{Bradbury:2018} backend of Awkward Array, and with the development of SymPy backend, vector can be expected to perform both automatic and symbolic differentiation. On the other hand, code generation for another language through the SymPy backend can potentially help physicists flexibly switch languages and frameworks for their analyses. Both of these functionalities can be assessed and experimented with in the future to fill gaps in the software used for high energy physics.
 
 \section{Acknowledgements}
 \label{sec-acknowledgements}
