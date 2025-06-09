@@ -20,11 +20,16 @@ This talk will introduce vector and its backends to the users and funnel down to
 If you use `vector` in your work, please cite it using the following metadata -
 
 ```bib
-@software{Schreiner_vector,
-author = {Schreiner, Henry and Pivarski, Jim and Chopra, Saransh},
-doi = {10.5281/zenodo.5942082},
-license = {BSD-3-Clause},
-title = {{vector}},
-url = {https://github.com/scikit-hep/vector}
+@article{Chopra_Vector_JIT-compilable_mathematical_2025,
+author = {Chopra, Saransh and Schreiner, Henry and Rodrigues, Eduardo and Eschle, Jonas and Pivarski, Jim},
+doi = {10.21105/joss.07791},
+journal = {Journal of Open Source Software},
+month = may,
+number = {109},
+pages = {7791},
+title = {{Vector: JIT-compilable mathematical manipulations of ragged Lorentz vectors}},
+url = {https://joss.theoj.org/papers/10.21105/joss.07791},
+volume = {10},
+year = {2025}
 }
 ```
